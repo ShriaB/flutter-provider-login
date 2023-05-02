@@ -15,42 +15,54 @@ class LoginView extends StatefulWidget {
 }
 
 class _LoginViewState extends State<LoginView> {
-  TextEditingController emailController = TextEditingController();
-  TextEditingController passwordController = TextEditingController();
+  /// TextEditingControllers for TextFormFields
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
 
-  FocusNode emailFocusNode = FocusNode();
-  FocusNode passwordFocusNode = FocusNode();
+  /// Focus nodes for TextFormFields
+  final FocusNode _emailFocusNode = FocusNode();
+  final FocusNode _passwordFocusNode = FocusNode();
 
-  final ValueNotifier<bool> _obscurePassword = ValueNotifier<bool>(false);
+  /// If email had valid format after email validation and accordingly error text is displayed
   final ValueNotifier<bool> _isEmailValid = ValueNotifier<bool>(true);
+
+  /// If password should be hidden or not
+  final ValueNotifier<bool> _obscurePassword = ValueNotifier<bool>(false);
+  // If password has a valid format or not after password validation
   bool _isPasswordValid = true;
 
-  String emailErrorText = "";
-
-  void login(context) async {
+  /// Checks if email and password have a valid format
+  /// If not valid then display error messages
+  /// If valid then calls the login() of viewModel
+  /// If request is successful then navigates to Home screen
+  /// Else displays snackbars to give feedback to the user that request failed
+  void login() async {
+    print("In login");
     final viewModel = Provider.of<LoginViewModel>(context, listen: false);
 
-    _isEmailValid.value = Validators.isEmailFormatValid(emailController.text);
+    _isEmailValid.value = Validators.isEmailFormatValid(_emailController.text);
 
     setState(() {
-      _isPasswordValid = Validators.isPasswordValid(passwordController.text);
+      _isPasswordValid = Validators.isPasswordValid(_passwordController.text);
     });
 
     if (_isEmailValid.value && _isPasswordValid) {
-      await viewModel.login(emailController.text, passwordController.text);
+      await viewModel.login(_emailController.text, _passwordController.text);
 
-      if (viewModel.data?.status == Status.SUCCESS) {
-        Navigator.pushReplacementNamed(context, RouteNames.home);
-        Utils.showGreenSnackBar(context, "You are successfully Logged in");
-      } else {
-        if (viewModel.data?.error == Error.UNAUTHORISED) {
-          Utils.showRedSnackBar(context, "Please enter valid credentials");
-        } else if (viewModel.data?.error == Error.CONNECTION) {
-          Utils.showRedSnackBar(
-              context, "Please check your Internet Connectivity");
+      if (context.mounted) {
+        if (viewModel.data?.status == Status.SUCCESS) {
+          Navigator.pushReplacementNamed(context, RouteNames.home);
+          Utils.showGreenSnackBar(context, "You are successfully Logged in");
         } else {
-          Utils.showRedSnackBar(
-              context, "Some error occured! Please try after some time");
+          if (viewModel.data?.error == Error.UNAUTHORISED) {
+            Utils.showRedSnackBar(context, "Please enter valid credentials");
+          } else if (viewModel.data?.error == Error.NO_INTERNET) {
+            Utils.showRedSnackBar(
+                context, "Please check your Internet Connectivity");
+          } else {
+            Utils.showRedSnackBar(
+                context, "Some error occured! Please try after some time");
+          }
         }
       }
     }
@@ -59,6 +71,8 @@ class _LoginViewState extends State<LoginView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+
+        /// Appbar
         appBar: AppBar(
           title: const Text("Login"),
           centerTitle: true,
@@ -73,16 +87,17 @@ class _LoginViewState extends State<LoginView> {
             children: [
               /// Email text field
               ValueListenableBuilder(
+                /// Listening to [_isEmailValid] for displaying error messages
                 valueListenable: _isEmailValid,
                 builder: (context, value, child) {
                   return TextFormField(
-                    controller: emailController,
-                    focusNode: emailFocusNode,
+                    controller: _emailController,
+                    focusNode: _emailFocusNode,
                     onFieldSubmitted: (value) {
                       _isEmailValid.value =
-                          Validators.isEmailFormatValid(emailController.text);
+                          Validators.isEmailFormatValid(_emailController.text);
                       Utils.changeFocus(
-                          context, emailFocusNode, passwordFocusNode);
+                          context, _emailFocusNode, _passwordFocusNode);
                     },
                     decoration: InputDecoration(
                         border: textInputDecorationBorder,
@@ -101,11 +116,12 @@ class _LoginViewState extends State<LoginView> {
 
               /// Password text field
               ValueListenableBuilder(
+                /// Listening to [_obscurePassword] for hidding and showing the password
                 valueListenable: _obscurePassword,
                 builder: (context, value, child) {
                   return TextFormField(
-                    controller: passwordController,
-                    focusNode: passwordFocusNode,
+                    controller: _passwordController,
+                    focusNode: _passwordFocusNode,
                     decoration: InputDecoration(
                       border: textInputDecorationBorder,
                       labelText: "Password",
@@ -135,7 +151,8 @@ class _LoginViewState extends State<LoginView> {
               ElevatedButton.icon(
                   style: textButtonStyle,
                   onPressed: () {
-                    login(context);
+                    print("Button pressed");
+                    login();
                   },
                   icon: const Icon(
                     Icons.login,
@@ -150,6 +167,7 @@ class _LoginViewState extends State<LoginView> {
                 height: 20.0,
               ),
 
+              /// Sign Up text
               InkWell(
                 onTap: () {
                   Navigator.pushReplacementNamed(context, RouteNames.signup);
@@ -165,10 +183,11 @@ class _LoginViewState extends State<LoginView> {
   @override
   void dispose() {
     super.dispose();
-    emailController.dispose();
-    passwordController.dispose();
-    emailFocusNode.dispose();
-    passwordFocusNode.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    _emailFocusNode.dispose();
+    _passwordFocusNode.dispose();
     _obscurePassword.dispose();
+    _isEmailValid.dispose();
   }
 }

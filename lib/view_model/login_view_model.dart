@@ -1,4 +1,3 @@
-import 'dart:developer';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:mvvm_provider_login/data/api_exceptions.dart';
@@ -10,32 +9,35 @@ import 'package:mvvm_provider_login/view_model/user_view_model.dart';
 
 class LoginViewModel with ChangeNotifier {
   final LoginRepository repository;
-  ApiResponse<Map<String, dynamic>>? _data;
-  ApiResponse<Map<String, dynamic>>? get data => _data;
+  ApiResponse<UserModel>? _data;
+  ApiResponse<UserModel>? get data => _data;
 
   LoginViewModel(this.repository);
 
-  setApiResponse(ApiResponse<Map<String, dynamic>> res) {
+  setApiResponse(ApiResponse<UserModel> res) {
+    print(" data : ${_data?.status}, ${_data?.data?.token}, ${_data?.error}");
+
     _data = res;
     notifyListeners();
   }
 
-  Future<bool> login(String email, String password) async {
+  Future<void> login(String email, String password) async {
+    print("In viewModel login");
     Map<String, String> data = {"email": email, "password": password};
 
     setApiResponse(ApiResponse.loading());
 
     await repository.loginApi(data).then((value) {
+      print(" response : ${value.token}");
       setApiResponse(ApiResponse.success(value));
-      UserViewModel().saveUser(UserModel(value['token']));
+      UserViewModel().saveUser(value);
     }).onError<SocketException>((error, stackTrace) {
-      setApiResponse(ApiResponse.error(Error.CONNECTION));
+      setApiResponse(ApiResponse.error(Error.NO_INTERNET));
     }).onError<UnauthorisedException>((error, stackTrace) {
       setApiResponse(ApiResponse.error(Error.UNAUTHORISED));
     }).onError((error, stackTrace) {
       setApiResponse(ApiResponse.error(Error.SERVER_ERROR));
     });
-    return true;
   }
 
   Future<void> signup(String email, String password) async {
@@ -44,7 +46,7 @@ class LoginViewModel with ChangeNotifier {
     await repository.registerApi(data).then((value) {
       setApiResponse(ApiResponse.success(value));
     }).onError<SocketException>((error, stackTrace) {
-      setApiResponse(ApiResponse.error(Error.CONNECTION));
+      setApiResponse(ApiResponse.error(Error.NO_INTERNET));
     }).onError((error, stackTrace) {
       setApiResponse(ApiResponse.error(Error.SERVER_ERROR));
     });

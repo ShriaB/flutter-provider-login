@@ -6,6 +6,8 @@ import 'package:mvvm_provider_login/view/screens/login_view.dart';
 import 'package:mvvm_provider_login/view/screens/signup_view.dart';
 
 class Routes {
+  /// Generates the routes
+  /// Returns the Routes for respective route names
   static Route<dynamic> generateRoutes(RouteSettings settings) {
     switch (settings.name) {
       case RouteNames.home:

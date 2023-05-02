@@ -15,31 +15,52 @@ class SignUpView extends StatefulWidget {
 }
 
 class _SignUpViewState extends State<SignUpView> {
-  TextEditingController emailController = TextEditingController();
-  TextEditingController passwordController = TextEditingController();
+  /// TextEditingControllers for TextFormFields
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
 
-  FocusNode emailFocusNode = FocusNode();
-  FocusNode passwordFocusNode = FocusNode();
+  /// Focus nodes for TextFormFields
+  final FocusNode _emailFocusNode = FocusNode();
+  final FocusNode _passwordFocusNode = FocusNode();
 
-  final ValueNotifier<bool> _obscurePassword = ValueNotifier<bool>(false);
+  /// If email had valid format after email validation and accordingly error text is displayed
   final ValueNotifier<bool> _isEmailValid = ValueNotifier<bool>(true);
+
+  /// If password should be hidden or not
+  final ValueNotifier<bool> _obscurePassword = ValueNotifier<bool>(false);
+  // If password has a valid format or not after password validation
   bool _isPasswordValid = true;
 
-  String emailErrorText = "";
-
-  void signup(context) async {
+  /// Checks if email and password have a valid format
+  /// If not valid then display error messages
+  /// If valid then calls the signup() of viewModel
+  /// If request is successful then navigates to login screen
+  /// Else displays snackbars to give feedback to the user that request failed
+  void signup() async {
     final viewModel = Provider.of<LoginViewModel>(context, listen: false);
 
-    _isEmailValid.value = Validators.isEmailFormatValid(emailController.text);
+    _isEmailValid.value = Validators.isEmailFormatValid(_emailController.text);
 
     setState(() {
-      _isPasswordValid = Validators.isPasswordValid(passwordController.text);
+      _isPasswordValid = Validators.isPasswordValid(_passwordController.text);
     });
 
     if (_isEmailValid.value && _isPasswordValid) {
-      await viewModel.signup(emailController.text, passwordController.text);
-      if (viewModel.data?.status == Status.SUCCESS) {
-        Navigator.pushReplacementNamed(context, RouteNames.login);
+      await viewModel.signup(_emailController.text, _passwordController.text);
+      if (context.mounted) {
+        if (viewModel.data?.status == Status.SUCCESS) {
+          Navigator.pushReplacementNamed(context, RouteNames.login);
+          Utils.showGreenSnackBar(
+              context, "Your account is successfully created");
+        } else {
+          if (viewModel.data?.error == Error.NO_INTERNET) {
+            Utils.showRedSnackBar(
+                context, "Please check your Internet Connectivity");
+          } else {
+            Utils.showRedSnackBar(
+                context, "Some error occured! Please try after some time");
+          }
+        }
       }
     }
   }
@@ -60,18 +81,29 @@ class _SignUpViewState extends State<SignUpView> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               /// Email text field
-              TextFormField(
-                controller: emailController,
-                focusNode: emailFocusNode,
-                onFieldSubmitted: (value) {
-                  Utils.changeFocus(context, emailFocusNode, passwordFocusNode);
+              ValueListenableBuilder(
+                /// Listening to [_isEmailValid] for displaying error messages
+                valueListenable: _isEmailValid,
+                builder: (context, value, child) {
+                  return TextFormField(
+                    controller: _emailController,
+                    focusNode: _emailFocusNode,
+                    onFieldSubmitted: (value) {
+                      _isEmailValid.value =
+                          Validators.isEmailFormatValid(_emailController.text);
+                      Utils.changeFocus(
+                          context, _emailFocusNode, _passwordFocusNode);
+                    },
+                    decoration: InputDecoration(
+                        border: textInputDecorationBorder,
+                        labelText: "Email",
+                        prefixIcon: const Icon(Icons.email),
+                        errorText: _isEmailValid.value
+                            ? null
+                            : "Please enter a valid email address: example@domain.com"),
+                    keyboardType: TextInputType.emailAddress,
+                  );
                 },
-                decoration: InputDecoration(
-                  border: textInputDecorationBorder,
-                  labelText: "Email",
-                  prefixIcon: const Icon(Icons.email),
-                ),
-                keyboardType: TextInputType.emailAddress,
               ),
 
               const SizedBox(
@@ -80,25 +112,28 @@ class _SignUpViewState extends State<SignUpView> {
 
               /// Password text fiel
               ValueListenableBuilder(
+                /// Listening to [_obscurePassword] for hidding and showing the password
                 valueListenable: _obscurePassword,
                 builder: (context, value, child) {
                   return TextFormField(
-                    controller: passwordController,
-                    focusNode: passwordFocusNode,
+                    controller: _passwordController,
+                    focusNode: _passwordFocusNode,
                     decoration: InputDecoration(
-                        border: textInputDecorationBorder,
-                        labelText: "Password",
-                        prefixIcon: const Icon(Icons.lock),
-                        suffixIcon: InkWell(
-                          onTap: () {
-                            setState(() {
-                              _obscurePassword.value = !_obscurePassword.value;
-                            });
-                          },
-                          child: (value == false)
-                              ? const Icon(Icons.visibility_off)
-                              : const Icon(Icons.visibility),
-                        )),
+                      border: textInputDecorationBorder,
+                      labelText: "Password",
+                      prefixIcon: const Icon(Icons.lock),
+                      suffixIcon: InkWell(
+                        onTap: () {
+                          _obscurePassword.value = !_obscurePassword.value;
+                        },
+                        child: (value == false)
+                            ? const Icon(Icons.visibility_off)
+                            : const Icon(Icons.visibility),
+                      ),
+                      errorText: _isPasswordValid
+                          ? null
+                          : "Password should contain atleat 6 characters",
+                    ),
                     obscureText: value,
                   );
                 },
@@ -108,11 +143,11 @@ class _SignUpViewState extends State<SignUpView> {
                 height: 20.0,
               ),
 
-              /// Login Button
+              /// Signup Button
               ElevatedButton.icon(
                   style: textButtonStyle,
                   onPressed: () {
-                    signup(context);
+                    signup();
                   },
                   icon: const Icon(
                     Icons.login,
@@ -142,10 +177,11 @@ class _SignUpViewState extends State<SignUpView> {
   @override
   void dispose() {
     super.dispose();
-    emailController.dispose();
-    passwordController.dispose();
-    emailFocusNode.dispose();
-    passwordFocusNode.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    _emailFocusNode.dispose();
+    _passwordFocusNode.dispose();
     _obscurePassword.dispose();
+    _isEmailValid.dispose();
   }
 }

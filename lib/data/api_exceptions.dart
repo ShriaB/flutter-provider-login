@@ -1,5 +1,6 @@
-// SocketException
-// Unauthorised exception
+/// SocketException - For no Internet
+/// Unauthorised exception - For invalid credentials
+/// ServerError - For error on server side
 
 class ApiException implements Exception {
   final String? message;

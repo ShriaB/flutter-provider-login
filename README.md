@@ -1,16 +1,12 @@
-# mvvm_provider_login
+# Flutter Login using Provider
 
-A new Flutter project.
+Contains a login feature which uses A dummy REST API (https://reqres.in/) for authentication and Provider for state management.
+ 
+## Concepts explored
 
-## Getting Started
-
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+- State Management using Provider
+- HTTP requests using http package
+- MVVM pattern with SOLID principles
+- Session Management using Shared Preferences
+- Input Validation using Regex in dart
+ 

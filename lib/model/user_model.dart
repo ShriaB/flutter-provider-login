@@ -1,3 +1,5 @@
+/// [token] Stores the authorization token fetched from the server after user log in
+
 class UserModel {
   String? token;
 

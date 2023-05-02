@@ -4,28 +4,31 @@ import 'package:mvvm_provider_login/model/user_model.dart';
 
 class UserViewModel with ChangeNotifier {
   UserModel? user;
+  bool isUserLoggedIn = false;
 
-  Future<bool> saveUser(UserModel user) async {
+  Future<void> saveUser(UserModel user) async {
     this.user = user;
     final SharedPreferences sp = await SharedPreferences.getInstance();
     sp.setString("token", user.token.toString());
+    isUserLoggedIn = true;
     notifyListeners();
-    return true;
   }
 
-  Future<void> getUser() async {
+  Future<bool> getUser() async {
     final SharedPreferences sp = await SharedPreferences.getInstance();
     String? token = sp.getString("token");
     if (token != null) {
       user = UserModel(token);
+      isUserLoggedIn = true;
     }
     notifyListeners();
+    return isUserLoggedIn;
   }
 
-  Future<bool> clearUser() async {
+  Future<void> clearUser() async {
     final SharedPreferences sp = await SharedPreferences.getInstance();
     sp.clear();
+    isUserLoggedIn = false;
     notifyListeners();
-    return true;
   }
 }

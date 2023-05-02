@@ -12,19 +12,32 @@ class LoadingView extends StatefulWidget {
 }
 
 class _LoadingViewState extends State<LoadingView> {
-  void isUserLoggedIn(context) async {
+  /// Checks if user is already logged in using UserViewModel
+  /// If user logged in then redirects to home page
+  /// Else goes to login page with a delay of 2 seconds
+  Future<void> isUserLoggedIn() async {
     final viewModel = Provider.of<UserViewModel>(context, listen: false);
-    await viewModel.getUser();
-    if (viewModel.user != null) {
-      Navigator.pushReplacementNamed(context, RouteNames.home);
-    } else {
-      Navigator.pushReplacementNamed(context, RouteNames.login);
+    bool isUserLoggedIn = await viewModel.getUser();
+    Future.delayed(const Duration(seconds: 2));
+
+    if (context.mounted) {
+      if (isUserLoggedIn) {
+        Navigator.pushReplacementNamed(context, RouteNames.home);
+      } else {
+        Navigator.pushReplacementNamed(context, RouteNames.login);
+      }
     }
   }
 
   @override
+  void initState() {
+    isUserLoggedIn();
+    super.initState();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    isUserLoggedIn(context);
+    /// While it checks if user is logged in or not a spinner is displayed
     return const Scaffold(
       body: Center(
         child: SpinKitFoldingCube(

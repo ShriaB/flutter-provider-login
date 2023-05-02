@@ -6,6 +6,8 @@ class Utils {
     FocusScope.of(context).requestFocus(nextFocusNode);
   }
 
+  /// Takes the message to display in snackbar
+  /// Shows a green snackbar indicating success
   static showGreenSnackBar(context, String message) {
     final snackBar = SnackBar(
       content: Text(message),
@@ -15,6 +17,8 @@ class Utils {
     ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
 
+  /// Takes the message to display in snackbar
+  /// Shows a red snackbar indicating failure or error
   static showRedSnackBar(context, String message) {
     final snackBar = SnackBar(
       content: Text(message),
